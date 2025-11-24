@@ -24,18 +24,31 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Disable CSRF (Not needed for JWT)
+            // 1. Disable CSRF (Cross-Site Request Forgery) 
+            // Not needed for stateless JWT APIs
+            .csrf(csrf -> csrf.disable())
+
+            // 2. Set Permissions on Endpoints
             .authorizeHttpRequests(auth -> auth
-                // 1. Allow everyone to access these endpoints (White List)
-                .requestMatchers("/api/v1/auth/**").permitAll() 
-                // 2. Any other request requires authentication
+                // Allow everyone to access the Auth Controller (Login/Register)
+                // This matches the path in your AuthController (@RequestMapping)
+                .requestMatchers("/api/v1/auth/**").permitAll()
+                
+                // Any other request requires a valid JWT token
                 .anyRequest().authenticated()
             )
+
+            // 3. Stateless Session Management
+            // We don't want Spring to create a session cookie. We want it to check the JWT every time.
             .sessionManagement(sess -> sess
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No sessions (JWT is stateless)
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-            .authenticationProvider(authenticationProvider) // Use our DB user lookup
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // Add our JWT filter
+
+            // 4. Set our custom Authentication Provider (Database User Lookup)
+            .authenticationProvider(authenticationProvider)
+
+            // 5. Add our JWT Filter before the standard username/password filter
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
