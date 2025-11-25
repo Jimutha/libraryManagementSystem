@@ -1,27 +1,50 @@
+"use client"; // Required for client-side fetching
+
+import { useEffect, useState } from "react";
 import BookCard from "@/components/BookCard";
+import api from "@/lib/api";
+import { Book } from "@/types";
 
 export default function Home() {
-  // Fake data for testing
-  const books = [
-    { id: 1, title: "Dune", author: "Frank Herbert", category: "Fiction" },
-    { id: 2, title: "1984", author: "George Orwell", category: "Fiction" },
-    {
-      id: 3,
-      title: "A Brief History of Time",
-      author: "Stephen Hawking",
-      category: "Science",
-    },
-  ];
+  // State to hold the list of books from the backend
+  const [books, setBooks] = useState<Book[]>([]);
+  // State to handle loading status
+  const [loading, setLoading] = useState(true);
+  // State to handle errors
+  const [error, setError] = useState("");
+
+  // This runs once when the page loads
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        // Call the Spring Boot endpoint: http://localhost:8081/api/v1/books/all
+        const response = await api.get("/books/all");
+        setBooks(response.data);
+      } catch (err) {
+        console.error("Failed to fetch books", err);
+        setError("Failed to load books. Is the backend running?");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBooks();
+  }, []);
+
+  if (loading)
+    return <div className="text-center p-12 text-xl">Loading library...</div>;
+  if (error)
+    return <div className="text-center p-12 text-red-500 text-xl">{error}</div>;
 
   return (
-    <main className="min-h-screen p-12 bg-gray-100 text-black">
+    <main className="min-h-screen bg-gray-50 text-black p-8 md:p-12">
       {/* Header Section */}
       <div className="max-w-6xl mx-auto mb-12 text-center">
-        <h1 className="text-4xl font-extrabold mb-4 text-blue-900">
+        <h1 className="text-5xl font-extrabold mb-4 text-blue-900 tracking-tight">
           Library Catalog
         </h1>
-        <p className="text-lg text-gray-600">
-          Browse our collection of amazing books
+        <p className="text-xl text-gray-600">
+          Discover your next favorite book from our collection.
         </p>
       </div>
 
@@ -30,9 +53,12 @@ export default function Home() {
         {books.map((book) => (
           <BookCard
             key={book.id}
+            // Use the correct prop names for the BookCard component
+            id={book.id} // IMPORTANT: Pass the ID so the link works
             title={book.title}
             author={book.author}
-            category={book.category}
+            // Safely handle category (it might be null or undefined)
+            category={book.category?.name || "Uncategorized"}
           />
         ))}
       </div>
