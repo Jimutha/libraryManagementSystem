@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import BookCard from "@/components/BookCard";
 import api from "@/lib/api";
 import { Book } from "@/types";
+import Link from "next/link"; // Import Link for navigation buttons
 
 export default function Home() {
   // State to hold the list of books from the backend
@@ -46,6 +47,22 @@ export default function Home() {
         <p className="text-xl text-gray-600">
           Discover your next favorite book from our collection.
         </p>
+
+        {/* Login / Signup Buttons */}
+        <div className="mt-6 space-x-4">
+          <Link
+            href="/login"
+            className="bg-white text-blue-600 px-6 py-2 rounded-full font-bold shadow-md hover:bg-gray-100 transition inline-block"
+          >
+            Login
+          </Link>
+          <Link
+            href="/signup"
+            className="bg-blue-800 text-white px-6 py-2 rounded-full font-bold shadow-md hover:bg-blue-900 transition inline-block"
+          >
+            Sign Up
+          </Link>
+        </div>
       </div>
 
       {/* Book Grid */}
@@ -53,7 +70,6 @@ export default function Home() {
         {books.map((book) => (
           <BookCard
             key={book.id}
-            // Use the correct prop names for the BookCard component
             id={book.id} // IMPORTANT: Pass the ID so the link works
             title={book.title}
             author={book.author}
