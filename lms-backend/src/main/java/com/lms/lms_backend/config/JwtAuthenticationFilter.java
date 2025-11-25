@@ -38,15 +38,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
-        // 1. Check if the request has a JWT token
+        // 1. Check if the request has a valid JWT token header
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. Extract the token from the header
+        // 2. Extract the token
         jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+        
+        try {
+            userEmail = jwtService.extractUsername(jwt);
+        } catch (Exception e) {
+            // If token is invalid or expired, just continue filter chain without setting authentication
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // 3. If user is not authenticated yet, check the database
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -66,7 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
-        // 6. Pass the request to the next step
+        
+        // 6. Pass the request to the next filter
         filterChain.doFilter(request, response);
     }
 }

@@ -8,6 +8,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -24,32 +30,57 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Disable CSRF (Cross-Site Request Forgery) 
-            // Not needed for stateless JWT APIs
+            // 1. Enable CORS (and use the configuration source defined below)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
+            // 2. Disable CSRF (Not needed for stateless JWT APIs)
             .csrf(csrf -> csrf.disable())
 
-            // 2. Set Permissions on Endpoints
+            // 3. Set Permissions on Endpoints
             .authorizeHttpRequests(auth -> auth
                 // Allow everyone to access the Auth Controller (Login/Register)
-                // This matches the path in your AuthController (@RequestMapping)
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                
+                // Allow public access to fetch books (So users can see the library without logging in)
+                .requestMatchers("/api/v1/books/**").permitAll()
                 
                 // Any other request requires a valid JWT token
                 .anyRequest().authenticated()
             )
 
-            // 3. Stateless Session Management
-            // We don't want Spring to create a session cookie. We want it to check the JWT every time.
+            // 4. Stateless Session Management
             .sessionManagement(sess -> sess
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // 4. Set our custom Authentication Provider (Database User Lookup)
+            // 5. Set our Authentication Provider
             .authenticationProvider(authenticationProvider)
 
-            // 5. Add our JWT Filter before the standard username/password filter
+            // 6. Add our JWT Filter
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // Define the CORS rules globally here
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Allow the Frontend URL
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        
+        // Allow common HTTP methods
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        // Allow headers (like Authorization for the token)
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        
+        // Allow credentials
+        configuration.setAllowCredentials(true); 
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // Apply to all endpoints
+        return source;
     }
 }

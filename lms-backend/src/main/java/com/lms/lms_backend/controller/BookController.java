@@ -3,10 +3,7 @@ package com.lms.lms_backend.controller;
 import com.lms.lms_backend.entity.Book;
 import com.lms.lms_backend.repository.BookRepository;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,8 +20,18 @@ public class BookController {
     }
 
     // Endpoint: GET /api/v1/books/all
+    // Used by the Home Page to list all books
     @GetMapping("/all")
     public ResponseEntity<List<Book>> getAllBooks() {
         return ResponseEntity.ok(bookRepository.findAll());
+    }
+
+    // Endpoint: GET /api/v1/books/{id}
+    // Used by the Book Details Page to show a single book
+    @GetMapping("/{id}")
+    public ResponseEntity<Book> getBookById(@PathVariable Integer id) {
+        return bookRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
