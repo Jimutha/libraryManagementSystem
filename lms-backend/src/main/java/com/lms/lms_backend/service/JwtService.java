@@ -33,9 +33,19 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
+    // --- UPDATED METHOD ---
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        // We create a Map to hold extra information
+        Map<String, Object> extraClaims = new HashMap<>();
+        
+        // We extract the Role from the user and add it to the token
+        // This assumes the user has only one role (which is true for our app)
+        String role = userDetails.getAuthorities().iterator().next().getAuthority();
+        extraClaims.put("role", role);
+
+        return generateToken(extraClaims, userDetails);
     }
+    // ---------------------
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
@@ -43,7 +53,7 @@ public class JwtService {
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
         return Jwts.builder()
-                .setClaims(extraClaims)
+                .setClaims(extraClaims) // Add our Role map here
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))

@@ -76,7 +76,7 @@ public class SecurityConfiguration {
         // Allow headers (like Authorization for the token)
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         
-        // Allow credentials
+        // Allow credentials (important for some browsers/axios setups)
         configuration.setAllowCredentials(true); 
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
