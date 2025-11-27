@@ -10,7 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-public class User implements UserDetails { // <--- Changed: Implements UserDetails
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,24 +28,23 @@ public class User implements UserDetails { // <--- Changed: Implements UserDetai
 
     private boolean isBlacklisted;
 
-    // --- UserDetails Methods (The new security rules) ---
+    // --- UserDetails Methods ---
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // This tells Spring: "This user has the role of..."
         return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
     @Override
     public String getUsername() {
-        return email; // We use email as the username
+        return email;
     }
 
     @Override
     public boolean isAccountNonExpired() { return true; }
 
     @Override
-    public boolean isAccountNonLocked() { return !isBlacklisted; } // Locked if blacklisted!
+    public boolean isAccountNonLocked() { return !isBlacklisted; }
 
     @Override
     public boolean isCredentialsNonExpired() { return true; }

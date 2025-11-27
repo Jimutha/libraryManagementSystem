@@ -1,10 +1,8 @@
 package com.lms.lms_backend.service;
 
-// IMPORTANT: These imports now point to your 'DataTransferObjects' folder
 import com.lms.lms_backend.DataTransferObjects.AuthRequest;
 import com.lms.lms_backend.DataTransferObjects.AuthResponse;
 import com.lms.lms_backend.DataTransferObjects.RegisterRequest;
-
 import com.lms.lms_backend.entity.Role;
 import com.lms.lms_backend.entity.User;
 import com.lms.lms_backend.repository.UserRepository;
@@ -28,34 +26,25 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
     }
 
-    // Register a new user
     public AuthResponse register(RegisterRequest request) {
         User user = new User();
         user.setEmail(request.getEmail());
-        // Encode the password before saving!
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        // Default to USER if no role is provided
         user.setRole(request.getRole() != null ? request.getRole() : Role.USER);
         user.setBlacklisted(false);
 
-        repository.save(user); // Save to MySQL
-        
-        // Generate a token for the new user immediately
+        repository.save(user);
         String jwtToken = jwtService.generateToken(user);
         return new AuthResponse(jwtToken);
     }
 
-    // Login an existing user
     public AuthResponse authenticate(AuthRequest request) {
-        // This line does the heavy lifting: checks username and password
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
                         request.getPassword()
                 )
         );
-        
-        // If we get here, the user is valid. Find them and generate a token.
         User user = repository.findByEmail(request.getEmail()).orElseThrow();
         String jwtToken = jwtService.generateToken(user);
         return new AuthResponse(jwtToken);

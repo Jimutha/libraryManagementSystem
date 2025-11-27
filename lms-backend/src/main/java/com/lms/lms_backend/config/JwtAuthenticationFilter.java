@@ -38,43 +38,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
-        // 1. Check if the request has a valid JWT token header
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. Extract the token
         jwt = authHeader.substring(7);
-        
         try {
             userEmail = jwtService.extractUsername(jwt);
         } catch (Exception e) {
-            // If token is invalid or expired, just continue filter chain without setting authentication
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 3. If user is not authenticated yet, check the database
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-
-            // 4. Validate the token
             if (jwtService.isTokenValid(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
+                        userDetails, null, userDetails.getAuthorities()
                 );
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                // 5. Update the security context (Mark user as "Logged In")
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
-        
-        // 6. Pass the request to the next filter
         filterChain.doFilter(request, response);
     }
 }

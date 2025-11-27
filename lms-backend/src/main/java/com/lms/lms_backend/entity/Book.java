@@ -13,10 +13,9 @@ public class Book {
     private String title;
     private String author;
 
-    // --- NEW: The Link to Category ---
     // Many Books belong to One Category
     @ManyToOne
-    @JoinColumn(name = "category_id") // This must match the column name in MySQL
+    @JoinColumn(name = "category_id")
     private Category category;
 
     // --- Getters and Setters ---

@@ -1,120 +1,106 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link"; // Import Link for navigation
 
 export default function AdminDashboard() {
-  // Get authentication state from our context
-  const { user, isAuthenticated, isLibrarian } = useAuth();
+  const { user, isAuthenticated, isLibrarian, logout } = useAuth();
   const router = useRouter();
+  const [isChecking, setIsChecking] = useState(true);
 
-  // Protect the route: Only allow Librarians
+  // Protect the route
   useEffect(() => {
-    // 1. If not logged in at all, go to login page
-    if (!isAuthenticated) {
-      // We use a small timeout to ensure auth state has finished loading
-      const timer = setTimeout(() => {
-        // Double check local storage directly as a fallback
-        if (!localStorage.getItem("token")) router.push("/login");
-      }, 100);
-      return () => clearTimeout(timer);
-    }
+    // We use a small timeout to allow AuthContext to load from localStorage
+    const timer = setTimeout(() => {
+      setIsChecking(false);
 
-    // 2. If logged in but NOT a librarian, kick them to the home page
-    if (isAuthenticated && !isLibrarian) {
-      console.warn("Access Denied: User is not a librarian");
-      router.push("/");
-    }
-  }, [isAuthenticated, isLibrarian, router]);
+      // 1. If not logged in at all -> Login Page
+      if (!localStorage.getItem("token")) {
+        router.push("/login");
+        return;
+      }
 
-  // Show a loading state while we check permissions
-  if (!isAuthenticated || !isLibrarian) {
+      // 2. If logged in but NOT a librarian -> Home Page
+      // We check user?.role directly or rely on isLibrarian if it's ready
+      if (user && user.role !== "LIBRARIAN") {
+        alert("Access Denied: Librarians Only");
+        router.push("/");
+      }
+    }, 500); // Small delay to prevent flickering
+
+    return () => clearTimeout(timer);
+  }, [user, router]);
+
+  // Show loading state while checking permissions
+  if (isChecking || !isAuthenticated || !isLibrarian) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <p className="text-xl text-gray-600 animate-pulse">
-          Checking access permissions...
+          Verifying permissions...
         </p>
       </div>
     );
   }
 
-  // Render the Dashboard for Librarians only
+  // If we passed the checks, show the dashboard
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <main className="min-h-screen bg-gray-50 text-black p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Dashboard Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-purple-900">
+          <h1 className="text-4xl font-bold text-purple-900">
             Librarian Dashboard
           </h1>
           <button
-            onClick={() => router.push("/")}
-            className="text-gray-600 hover:text-gray-900 underline"
+            onClick={logout}
+            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
           >
-            Back to Home
+            Logout
           </button>
         </div>
 
-        {/* Welcome Card */}
-        <div className="bg-white p-8 rounded-xl shadow-md mb-8">
-          <h2 className="text-2xl font-semibold mb-2 text-black">
-            Welcome back, {user?.sub}
+        <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+          <h2 className="text-2xl font-semibold mb-2 text-gray-800">
+            Welcome, {user?.sub}
           </h2>
-          <p className="text-gray-600">
-            You have full administrative access to the library system. Use the
-            tools below to manage the catalog and users.
+          <p className="text-gray-600 mb-8">
+            You have full administrative access to the library system.
           </p>
-        </div>
 
-        {/* Action Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Add Book Card */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer">
-            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 text-2xl font-bold">
-              +
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
-              Add New Book
-            </h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Add new titles to the library catalog.
-            </p>
-            <button className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-              Add Book
-            </button>
-          </div>
+          {/* Admin Actions Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Action Card 1: Add New Book - NOW LINKED */}
+            <Link href="/admin/add-book" className="block h-full">
+              <div className="p-6 bg-blue-50 border border-blue-100 rounded-xl hover:shadow-lg transition cursor-pointer group h-full">
+                <h3 className="text-xl font-bold text-blue-700 group-hover:text-blue-900 mb-2">
+                  + Add New Book
+                </h3>
+                <p className="text-sm text-blue-600/80">
+                  Add new titles to the library catalog.
+                </p>
+              </div>
+            </Link>
 
-          {/* Manage Users Card */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer">
-            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 text-2xl font-bold">
-              U
+            {/* Action Card 2 */}
+            <div className="p-6 bg-green-50 border border-green-100 rounded-xl hover:shadow-lg transition cursor-pointer group">
+              <h3 className="text-xl font-bold text-green-700 group-hover:text-green-900 mb-2">
+                Manage Users
+              </h3>
+              <p className="text-sm text-green-600/80">
+                View members and handle blacklisting.
+              </p>
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
-              Manage Users
-            </h3>
-            <p className="text-gray-600 text-sm mb-4">
-              View users and manage blacklist status.
-            </p>
-            <button className="w-full py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 transition">
-              View Users
-            </button>
-          </div>
 
-          {/* Reservations Card */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer">
-            <div className="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mb-4 text-2xl font-bold">
-              R
+            {/* Action Card 3 */}
+            <div className="p-6 bg-yellow-50 border border-yellow-100 rounded-xl hover:shadow-lg transition cursor-pointer group">
+              <h3 className="text-xl font-bold text-yellow-700 group-hover:text-yellow-900 mb-2">
+                View Reservations
+              </h3>
+              <p className="text-sm text-yellow-600/80">
+                Check current active book loans.
+              </p>
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
-              Reservations
-            </h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Track active book reservations and due dates.
-            </p>
-            <button className="w-full py-2 px-4 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition">
-              See All
-            </button>
           </div>
         </div>
       </div>

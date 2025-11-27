@@ -15,7 +15,7 @@ public class Category {
     private String name;
 
     // One Category has Many Books
-    // This tells Spring: "Go look at the 'category' field in the Book class to find the link"
+    // This connects to the 'category' field in the Book class
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private List<Book> books;
 
@@ -35,5 +35,13 @@ public class Category {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public List<Book> getBooks() {
+        return books;
+    }
+
+    public void setBooks(List<Book> books) {
+        this.books = books;
     }
 }

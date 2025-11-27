@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import BookCard from "@/components/BookCard";
 import api from "@/lib/api";
 import { Book } from "@/types";
-import Link from "next/link"; // Import Link for navigation buttons
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext"; // Import auth hook
 
 export default function Home() {

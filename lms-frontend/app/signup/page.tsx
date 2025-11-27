@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,20 +24,17 @@ export default function SignupPage() {
     setError("");
 
     try {
-      // Call the backend register endpoint
-      // Note: We default the role to USER in the backend
+      // 1. Call the backend register endpoint
       const response = await api.post("/auth/register", formData);
 
-      // Save the token and redirect
-      localStorage.setItem("token", response.data.token);
+      // 2. Use the Context function to save token & state
+      login(response.data.token);
+
+      // 3. Redirect to Home Page
       router.push("/");
     } catch (err: unknown) {
       console.error("Signup failed", err);
-      if (err instanceof Error) {
-        setError("Failed to create account. " + err.message);
-      } else {
-        setError("Failed to create account. Email might already be taken.");
-      }
+      setError("Failed to create account. Email might already be taken.");
     } finally {
       setLoading(false);
     }

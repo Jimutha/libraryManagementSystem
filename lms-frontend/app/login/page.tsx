@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,30 +24,13 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Call the backend login endpoint
       const response = await api.post("/auth/login", formData);
-
-      // Save the JWT token to browser storage
-      localStorage.setItem("token", response.data.token);
-
-      // Redirect to Home Page
+      login(response.data.token);
+      // The login function in context handles the redirect, but we can do it here too just in case
       router.push("/");
     } catch (err: unknown) {
       console.error("Login failed", err);
-      // Narrow the unknown error to something useful for display
-      let message = "Invalid email or password. Please try again.";
-      if (err instanceof Error) {
-        message = err.message;
-      } else if (typeof err === "string") {
-        message = err;
-      } else {
-        try {
-          message = JSON.stringify(err);
-        } catch {
-          // keep default message
-        }
-      }
-      setError(message);
+      setError("Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }
