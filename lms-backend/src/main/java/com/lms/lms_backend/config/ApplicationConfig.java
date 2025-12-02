@@ -21,14 +21,12 @@ public class ApplicationConfig {
         this.repository = repository;
     }
 
-    // 1. How to find a user
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> repository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
-    // 2. How to encrypt passwords
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
